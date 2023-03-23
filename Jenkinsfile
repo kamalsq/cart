@@ -47,7 +47,6 @@ pipeline {
             static-code-anlysis()
        }
       }
-     }
   }
   
     stage('Build Docker Image') {   
@@ -157,7 +156,7 @@ pipeline {
        steps {    
           container('dind') {
             script {
-                askfordeploy()
+                deploy()
         }
       }
      }
