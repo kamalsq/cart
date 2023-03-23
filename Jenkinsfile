@@ -1,3 +1,5 @@
+@Library('Jenkins-shared-library') _
+
 def COLOR_MAP = [
     'SUCCESS': 'good',
     'FAILURE': 'danger',
@@ -7,26 +9,7 @@ def COLOR_MAP = [
 
 pipeline {
   environment {
-    doError = '0'
-    AWS_ACCOUNT_ID = 271251951598
-    AWS_REGION = "us-east-2"
-    DOCKER_REPO_BASE_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    DOCKER_REPO_NAME = """${sh(
-                returnStdout: true,
-                script: 'basename=$(basename $GIT_URL) && echo ${basename%.*}'
-            ).trim()}"""
-    HELM_CHART_GIT_REPO_URL = "https://gitlab.com/sq-ia/ref/msa-app/helm.git"
-    HELM_CHART_GIT_BRANCH = "qa"
-    GIT_USER_EMAIL = "pipelines@squareops.com"
-    GIT_USER_NAME = "squareops"  
-    DEPLOYMENT_STAGE = """${sh(
-                returnStdout: true,
-                script: 'echo ${GIT_BRANCH#origin/}'
-            ).trim()}"""
-    last_started_build_stage = ""   
-    IMAGE_NAME="${DOCKER_REPO_BASE_URL}/${DOCKER_REPO_NAME}/stg"
-    def BUILD_DATE = sh(script: "echo `date +%d_%m_%Y`", returnStdout: true).trim();
-    def scannerHome = tool 'SonarqubeScanner';
+	environment()
   }
 
   options {
@@ -90,10 +73,7 @@ pipeline {
       steps {
        container('kaniko'){
             script {
-              last_started = env.STAGE_NAME
-              echo 'Build start'              
-              sh '''/kaniko/executor --dockerfile Dockerfile  --context=`pwd` --destination=${IMAGE_NAME}:${BUILD_NUMBER}-${BUILD_DATE} --no-push --oci-layout-path `pwd`/build/ --tarPath `pwd`/build/${DOCKER_REPO_NAME}-${BUILD_NUMBER}.tar
-              '''               
+		build-docker-image()              
             }   
             stash includes: 'build/*.tar', name: 'image'          
         }
